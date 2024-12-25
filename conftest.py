@@ -1,13 +1,15 @@
 import pytest
-from api import ApiClient
-from config.config import BASE_HOST
+from api_clients.mail_client import MailClient
+from api_clients.register_client import RegisterClient
+from config.config import REGISTER_API, MAIL_API
+from tests.api.test_data import generate_user_data
 from utils.logger import setup_logger
 
 # Настройка логгера для тестов
 logger = setup_logger('TestApi')
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def log_test(request):
     """
     Фикстура для логирования начала и конца каждого теста.
@@ -19,6 +21,18 @@ def log_test(request):
     logger.info(f"Finished test: {request.node.name}")  # Логируем окончание теста
 
 
+# Генерация данных
+@pytest.fixture(scope="session")
+def user_data():
+    return generate_user_data()
+
+
+# Клиенты
 @pytest.fixture()
-def client():
-    return ApiClient(BASE_HOST)
+def register_client():
+    return RegisterClient(REGISTER_API)
+
+
+@pytest.fixture()
+def mail_client():
+    return MailClient(MAIL_API)

@@ -1,1 +1,6 @@
-BASE_HOST = "http://5.63.153.31:8085/"  # Указываем базовый URL для API
+BASE_URL = "http://5.63.153.31:8085/"
+REGISTER_API = f"{BASE_URL}register/"
+MAIL_API = f"{BASE_URL}mail/"
+AUTH_API = f"{BASE_URL}auth/"
+ACCOUNT_API = f"{BASE_URL}account/"
+USERS_API = f"{BASE_URL}users/"
