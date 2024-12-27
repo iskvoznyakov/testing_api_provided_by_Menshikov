@@ -1,7 +1,8 @@
 import pytest
+from api_clients.auth_client import AuthClient
 from api_clients.mail_client import MailClient
 from api_clients.register_client import RegisterClient
-from config.config import REGISTER_API, MAIL_API
+from config.config import REGISTER_API, MAIL_API, AUTH_API
 from tests.api.test_data import generate_user_data
 from utils.logger import setup_logger
 
@@ -36,3 +37,8 @@ def register_client():
 @pytest.fixture()
 def mail_client():
     return MailClient(MAIL_API)
+
+
+@pytest.fixture()
+def auth_client():
+    return AuthClient(AUTH_API)
