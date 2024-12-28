@@ -1,10 +1,17 @@
+import allure
+
+
+@allure.title("Регистрация нового пользователя")
+@allure.description("Проверяем регистрацию пользователя через API")
 # Позитивная проверка регистрации пользователя
 def test_register_user(log_test, register_client, user_data):
     # В payload вставляю логин, который был заранее сгенерирован с помощью fakera
-    response = register_client.register_user(user_data)
-    assert response.status_code == 201, f"Registration failed, status_code of the response: {response.status_code}"
-    assert response.json()[
-               "message"] == "User has been registered and expects confirmation by e-mail", "Registration failed"
+    with allure.step("Отправляем запрос на регистрацию"):
+        response = register_client.register_user(user_data)
+    with allure.step("Проверяем статус-код и сообщение ответа"):
+        assert response.status_code == 201, f"Registration failed, status_code of the response: {response.status_code}"
+        assert response.json()[
+                   "message"] == "User has been registered and expects confirmation by e-mail", "Registration failed"
 
 
 # Позитивная проверка активации пользователя, созданного в предыдущем тесте
