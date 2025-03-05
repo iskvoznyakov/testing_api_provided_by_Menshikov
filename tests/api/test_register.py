@@ -18,6 +18,7 @@ def test_valid_register_user(log_test, register_client, user_data):
 @allure.title("Негативная регистрация нового пользователя")
 @allure.description("Проверяем валидацию при регистрации пользователя через API")
 # Негативная проверка регистрации пользователя
+#В параметризации - последний тест падает из-за бага, соответственно его пометил xfailом, также добавил ids
 @pytest.mark.parametrize("login, email, password, response_field, validation_message",
                          [('', "emmaail@mail.ru", "password", "Login", "Empty"),
                           ("llooggiinnn", "", "password", "Email", "Empty"),
