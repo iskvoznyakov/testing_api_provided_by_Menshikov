@@ -1,3 +1,5 @@
+import requests
+
 from utils.logger import setup_logger
 
 
@@ -26,3 +28,11 @@ class BaseClient:
         """
         self.logger.info(
             f"Response: {response.status_code} - {response.text}...")  # Логируем статус-код и все символы ответа
+
+    def _request(self, method, endpoint, **kwargs):
+        """Общий метод для отправки запросов"""
+        url = f"{self.base_url}{endpoint}"
+        self.log_request(method, endpoint, **kwargs)
+        response = requests.request(method, url, headers=self.headers, **kwargs)
+        self.log_response(response)
+        return response
