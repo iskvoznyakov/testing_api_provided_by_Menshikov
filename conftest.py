@@ -23,7 +23,7 @@ def log_test(request):
 
 
 # Генерация данных
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def user_data():
     return generate_user_data()
 
