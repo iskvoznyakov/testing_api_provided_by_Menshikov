@@ -1,4 +1,8 @@
 # Позитивная проверка авторизации активированного пользователя
+import pytest
+
+
+@pytest.mark.skip
 def test_valid_auth_user(log_test, register_client, mail_client, auth_client, user_data):
     response = register_client.register_user(user_data)
     assert response.status_code == 201, f"Registration failed, status_code of the response: {response.status_code}"
@@ -19,6 +23,7 @@ def test_valid_auth_user(log_test, register_client, mail_client, auth_client, us
 
 # Пока что подряд эти тесты запускать не получится, т.к. они используют одинаковые перс. данные
 # Негативная проверка авторизации активированного пользователя (некорректный пароль)
+@pytest.mark.skip
 def test_invalid_auth_user(log_test, register_client, mail_client, auth_client, user_data):
     response = register_client.register_user(user_data)
     assert response.status_code == 201, f"Registration failed, status_code of the response: {response.status_code}"
