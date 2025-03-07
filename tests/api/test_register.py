@@ -4,7 +4,6 @@ import pytest
 
 @allure.title("Позитивная регистрация нового пользователя")
 @allure.description("Проверяем регистрацию пользователя через API")
-# Позитивная проверка регистрации пользователя
 def test_valid_register_user(log_test, register_client, user_data):
     # В payload вставляю логин, который был заранее сгенерирован с помощью fakera
     with allure.step("Отправляем запрос на регистрацию"):
@@ -18,7 +17,7 @@ def test_valid_register_user(log_test, register_client, user_data):
 @allure.title("Негативная регистрация нового пользователя")
 @allure.description("Проверяем валидацию при регистрации пользователя через API")
 # Негативная проверка регистрации пользователя
-#В параметризации - последний тест падает из-за бага, соответственно его пометил xfailом, также добавил ids
+# В параметризации - последний тест падает из-за бага, соответственно его пометил xfailом, также добавил ids
 @pytest.mark.parametrize("login, email, password, response_field, validation_message",
                          [('', "emmaail@mail.ru", "password", "Login", "Empty"),
                           ("llooggiinnn", "", "password", "Email", "Empty"),
@@ -27,7 +26,7 @@ def test_valid_register_user(log_test, register_client, user_data):
                           ("llooggiinnn", "emmaail@mail.ru", "12345", "Password", "Short"),
                           ('l' * 61, "emmaail@mail.ru", "password", "Login", "Long"),
                           ("llooggiinnn", "email.ru", "password", "Email", "Invalid"),
-                          pytest.param("llooggiinnn", "emaill@mailru", "password", "Email", "Invalid",
+                          pytest.param("llooggiinnnn", "emailll@mailru", "password", "Email", "Invalid",
                                        marks=pytest.mark.xfail(reason="bug"))],
                          ids=["empty login", "empty email", "empty password", "short login", "short password",
                               "long login", "email without @", "email without . in domain part"])
@@ -45,10 +44,16 @@ def test_invalid_register_user(log_test, register_client, login, email, password
         assert validation_message in response.json()["detail"]["errors"][response_field], "Registration succeed"
 
 
+@allure.title("Позитивная активация зарегистрированного пользователя")
+@allure.description("Проверяем активации зарегистрированного пользователя через API")
 # Позитивная проверка активации пользователя, созданного в предыдущем тесте
-def test_activate_user(log_test, register_client, mail_client, user_data):
-    token = mail_client.find_letter_by_login(user_data["login"])
-    # Использую логин пользователя, созданного в предыдущем тесте
-    response = register_client.activate_user(token)
-    assert response.status_code == 200, f"Activation failed, status_code of the response: {response.status_code}"
-    assert response.json()["resource"]["login"] == user_data["login"], "Activation of user failed"
+def test_valid_activate_user(log_test, register_client, mail_client, user_data):
+    with allure.step("Отправляем запрос на регистрацию"):
+        response = register_client.register_user(user_data)
+    with allure.step("Активируем пользователя с помощью полученного токена"):
+        # Использую логин пользователя, созданного в предыдущем тесте
+        token = mail_client.find_letter_by_login(user_data["login"])
+        response = register_client.activate_user(token)
+    with allure.step("Проверяем статус-код и сообщение о валидации в ответе"):
+        assert response.status_code == 200, f"Activation failed, status_code of the response: {response.status_code}"
+        assert response.json()["resource"]["login"] == user_data["login"], "Activation of user failed"
