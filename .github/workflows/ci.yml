@@ -28,3 +28,14 @@ jobs:
 
       - name: Run tests
         run: pytest --alluredir=allure-results
+
+      - name: Upload Allure results
+        uses: actions/upload-artifact@v3
+        with:
+          name: allure-results
+          path: allure-results
+
+      - name: Generate Allure Report
+        run: |
+          allure generate allure-results --clean -o allure-report
+          ls -l allure-report
