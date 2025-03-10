@@ -1,8 +1,10 @@
 import pytest
+
+from api_clients.account_client import AccountClient
 from api_clients.auth_client import AuthClient
 from api_clients.mail_client import MailClient
 from api_clients.register_client import RegisterClient
-from config.config import REGISTER_API, MAIL_API, AUTH_API
+from config.config import REGISTER_API, MAIL_API, AUTH_API, ACCOUNT_API
 from tests.api.test_data import generate_user_data
 from utils.logger import setup_logger
 
@@ -42,3 +44,8 @@ def mail_client():
 @pytest.fixture()
 def auth_client():
     return AuthClient(AUTH_API)
+
+
+@pytest.fixture()
+def account_client():
+    return AccountClient(ACCOUNT_API)
