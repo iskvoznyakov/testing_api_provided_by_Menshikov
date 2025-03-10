@@ -14,8 +14,8 @@ def generate_user_data_for_register_and_auth():
 def generate_data_about_user():
     name = faker.name()
     location = faker.city()
-    icq = faker.text(max_nb_chars=15)
-    skype = faker.text(max_nb_chars=15)
+    icq = faker.vin()
+    skype = faker.vin()
     info = faker.text(max_nb_chars=15)
     profile_picture_url = faker.url()
     medium_profile_picture_url = faker.url()

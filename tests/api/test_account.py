@@ -1,5 +1,3 @@
-from pprint import pprint
-
 import allure
 import pytest
 
@@ -97,3 +95,33 @@ def test_valid_change_info_about_user_in_one_field(log_test, register_client, ma
             assert user_data[field] == response.json()["resource"][account_client.mapping_list[field]]
         else:
             assert user_data[field] == response.json()["resource"][field]
+
+@allure.title("Позитивная проверка изменения информации о пользователе")
+@allure.description("Проверяем изменение информации о пользователе через API сразу во всех полях")
+def test_valid_change_info_about_user_in_all_fields(log_test, register_client, mail_client, auth_client, account_client,
+                                      reg_auth_data, user_data):
+    with allure.step("Предусловие: регистрация и активация пользователя"):
+        # Регистрация
+        response = register_client.register_user(reg_auth_data)
+        assert response.status_code == 201, f"Registration failed, status_code of the response: {response.status_code}"
+        # Получаем токен активации и активируем пользователя
+        token = mail_client.find_letter_by_login(reg_auth_data["login"])
+        response = register_client.activate_user(token)
+        assert response.json()["resource"]["login"] == reg_auth_data["login"], "Activation of user failed"
+        # Пытаемся авторизоваться только что созданным и активированным пользователем
+        payload = {
+            "login": reg_auth_data["login"],
+            "password": reg_auth_data["password"],
+            "rememberMe": True
+        }
+        response = auth_client.auth_user(payload)
+        assert response.status_code == 200, f"Authorization failed, status_code of the response: {response.status_code}"
+        assert "token" in response.json()["metadata"], "There's no any token"
+        # Забираем токен из ответа
+        auth_token = response.json()["metadata"]["token"]
+    with allure.step("Изменяем информацию о пользователе"):
+        payload = user_data
+        response = account_client.change_account_info(auth_token=auth_token, payload=payload)
+        assert response.status_code == 200, f"Changing info failed, status_code of the response: {response.status_code}"
+        for item in user_data.values():
+            assert item in response.json()["resource"].values()
