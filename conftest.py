@@ -34,6 +34,28 @@ def reg_auth_data():
 def user_data():
     return generate_data_about_user()
 
+# Предусловие для некоторых тестов в test_account.py
+@pytest.fixture(scope="function")
+def user_auth_token(register_client, mail_client, auth_client, reg_auth_data):
+    # Регистрация
+    response = register_client.register_user(reg_auth_data)
+    assert response.status_code == 201, f"Registration failed, status_code of the response: {response.status_code}"
+    # Получаем токен активации и активируем пользователя
+    token = mail_client.find_activate_letter_by_login(reg_auth_data["login"])
+    response = register_client.activate_user(token)
+    assert response.json()["resource"]["login"] == reg_auth_data["login"], "Activation of user failed"
+    # Пытаемся авторизоваться только что созданным и активированным пользователем
+    payload = {
+        "login": reg_auth_data["login"],
+        "password": reg_auth_data["password"],
+        "rememberMe": True
+    }
+    response = auth_client.auth_user(payload)
+    assert response.status_code == 200, f"Authorization failed, status_code of the response: {response.status_code}"
+    assert "token" in response.json()["metadata"], "There's no any token"
+    # Забираем токен из ответа
+    auth_token = response.json()["metadata"]["token"]
+    return auth_token
 
 # Клиенты
 @pytest.fixture()
