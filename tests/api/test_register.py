@@ -4,10 +4,10 @@ import pytest
 
 @allure.title("Позитивная регистрация нового пользователя")
 @allure.description("Проверяем регистрацию пользователя через API")
-def test_valid_register_user(log_test, register_client, user_data):
+def test_valid_register_user(log_test, register_client, reg_auth_data):
     # В payload вставляю логин, который был заранее сгенерирован с помощью fakera
     with allure.step("Отправляем запрос на регистрацию"):
-        response = register_client.register_user(user_data)
+        response = register_client.register_user(reg_auth_data)
     with allure.step("Проверяем статус-код и сообщение ответа"):
         assert response.status_code == 201, f"Registration failed, status_code of the response: {response.status_code}"
         assert response.json()[
@@ -47,13 +47,13 @@ def test_invalid_register_user(log_test, register_client, login, email, password
 @allure.title("Позитивная активация зарегистрированного пользователя")
 @allure.description("Проверяем активации зарегистрированного пользователя через API")
 # Позитивная проверка активации пользователя, созданного в предыдущем тесте
-def test_valid_activate_user(log_test, register_client, mail_client, user_data):
+def test_valid_activate_user(log_test, register_client, mail_client, reg_auth_data):
     with allure.step("Отправляем запрос на регистрацию"):
-        response = register_client.register_user(user_data)
+        response = register_client.register_user(reg_auth_data)
     with allure.step("Активируем пользователя с помощью полученного токена"):
         # Использую логин пользователя, созданного в предыдущем тесте
-        token = mail_client.find_letter_by_login(user_data["login"])
+        token = mail_client.find_activate_letter_by_login(reg_auth_data["login"])
         response = register_client.activate_user(token)
     with allure.step("Проверяем статус-код и сообщение о валидации в ответе"):
         assert response.status_code == 200, f"Activation failed, status_code of the response: {response.status_code}"
-        assert response.json()["resource"]["login"] == user_data["login"], "Activation of user failed"
+        assert response.json()["resource"]["login"] == reg_auth_data["login"], "Activation of user failed"
