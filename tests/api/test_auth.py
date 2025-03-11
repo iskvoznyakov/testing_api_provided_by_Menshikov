@@ -8,7 +8,7 @@ def test_valid_auth_user(log_test, register_client, mail_client, auth_client, re
         response = register_client.register_user(reg_auth_data)
         assert response.status_code == 201, f"Registration failed, status_code of the response: {response.status_code}"
     with allure.step("Получаем токен активации и активируем пользователя"):
-        token = mail_client.find_letter_by_login(reg_auth_data["login"])
+        token = mail_client.find_activate_letter_by_login(reg_auth_data["login"])
         response = register_client.activate_user(token)
         assert response.json()["resource"]["login"] == reg_auth_data["login"], "Activation of user failed"
     with allure.step("Пытаемся авторизоваться только что созданным и активированным пользователем"):
@@ -30,7 +30,7 @@ def test_invalid_auth_user(log_test, register_client, mail_client, auth_client, 
         response = register_client.register_user(reg_auth_data)
         assert response.status_code == 201, f"Registration failed, status_code of the response: {response.status_code}"
     with allure.step("Получаем токен активации и активируем пользователя"):
-        token = mail_client.find_letter_by_login(reg_auth_data["login"])
+        token = mail_client.find_activate_letter_by_login(reg_auth_data["login"])
         response = register_client.activate_user(token)
         assert response.json()["resource"]["login"] == reg_auth_data["login"], "Activation of user failed"
     with allure.step(

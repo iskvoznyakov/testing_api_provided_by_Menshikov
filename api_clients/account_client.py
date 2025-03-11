@@ -15,3 +15,19 @@ class AccountClient(BaseClient):
     def change_account_info(self, auth_token, payload):
         self.headers.update({"token": auth_token})
         return self._request(method="PATCH", endpoint="account/info", json=payload)
+
+    def reset_password(self, login, email):
+        payload = {
+            "login": login,
+            "email": email
+        }
+        return self._request(method="POST", endpoint="account/reset-password", json=payload)
+
+    def change_password(self, login, token, old_password, new_password):
+        payload = {
+            "login": login,
+            "token": token,
+            "oldPassword": old_password,
+            "newPassword": new_password
+        }
+        return self._request(method="PUT", endpoint="account/change-password", json=payload)

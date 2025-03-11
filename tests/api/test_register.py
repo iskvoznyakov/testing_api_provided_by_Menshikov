@@ -52,7 +52,7 @@ def test_valid_activate_user(log_test, register_client, mail_client, reg_auth_da
         response = register_client.register_user(reg_auth_data)
     with allure.step("Активируем пользователя с помощью полученного токена"):
         # Использую логин пользователя, созданного в предыдущем тесте
-        token = mail_client.find_letter_by_login(reg_auth_data["login"])
+        token = mail_client.find_activate_letter_by_login(reg_auth_data["login"])
         response = register_client.activate_user(token)
     with allure.step("Проверяем статус-код и сообщение о валидации в ответе"):
         assert response.status_code == 200, f"Activation failed, status_code of the response: {response.status_code}"

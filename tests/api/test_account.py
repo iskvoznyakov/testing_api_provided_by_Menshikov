@@ -1,3 +1,5 @@
+from pprint import pprint
+
 import allure
 import pytest
 
@@ -10,7 +12,7 @@ def test_valid_get_info_about_user(log_test, register_client, mail_client, auth_
         response = register_client.register_user(reg_auth_data)
         assert response.status_code == 201, f"Registration failed, status_code of the response: {response.status_code}"
         # Получаем токен активации и активируем пользователя
-        token = mail_client.find_letter_by_login(reg_auth_data["login"])
+        token = mail_client.find_activate_letter_by_login(reg_auth_data["login"])
         response = register_client.activate_user(token)
         assert response.json()["resource"]["login"] == reg_auth_data["login"], "Activation of user failed"
         # Пытаемся авторизоваться только что созданным и активированным пользователем
@@ -32,13 +34,14 @@ def test_valid_get_info_about_user(log_test, register_client, mail_client, auth_
 
 @allure.title("Негативная проверка получения информации о пользователе")
 @allure.description("Проверяем получение информации о пользователе через API")
-def test_invalid_get_info_about_user(log_test, register_client, mail_client, auth_client, account_client, reg_auth_data):
+def test_invalid_get_info_about_user(log_test, register_client, mail_client, auth_client, account_client,
+                                     reg_auth_data):
     with allure.step("Предусловие: регистрация и активация пользователя"):
         # Регистрация
         response = register_client.register_user(reg_auth_data)
         assert response.status_code == 201, f"Registration failed, status_code of the response: {response.status_code}"
         # Получаем токен активации и активируем пользователя
-        token = mail_client.find_letter_by_login(reg_auth_data["login"])
+        token = mail_client.find_activate_letter_by_login(reg_auth_data["login"])
         response = register_client.activate_user(token)
         assert response.json()["resource"]["login"] == reg_auth_data["login"], "Activation of user failed"
         # Пытаемся авторизоваться только что созданным и активированным пользователем
@@ -67,13 +70,13 @@ def test_invalid_get_info_about_user(log_test, register_client, mail_client, aut
                               "changing skype", "changing info", "changing profile_picture_url",
                               "changing medium_profile_picture_url", "changing small_profile_picture_url"])
 def test_valid_change_info_about_user_in_one_field(log_test, register_client, mail_client, auth_client, account_client,
-                                      reg_auth_data, user_data, field):
+                                                   reg_auth_data, user_data, field):
     with allure.step("Предусловие: регистрация и активация пользователя"):
         # Регистрация
         response = register_client.register_user(reg_auth_data)
         assert response.status_code == 201, f"Registration failed, status_code of the response: {response.status_code}"
         # Получаем токен активации и активируем пользователя
-        token = mail_client.find_letter_by_login(reg_auth_data["login"])
+        token = mail_client.find_activate_letter_by_login(reg_auth_data["login"])
         response = register_client.activate_user(token)
         assert response.json()["resource"]["login"] == reg_auth_data["login"], "Activation of user failed"
         # Пытаемся авторизоваться только что созданным и активированным пользователем
@@ -96,16 +99,17 @@ def test_valid_change_info_about_user_in_one_field(log_test, register_client, ma
         else:
             assert user_data[field] == response.json()["resource"][field]
 
+
 @allure.title("Позитивная проверка изменения информации о пользователе")
 @allure.description("Проверяем изменение информации о пользователе через API сразу во всех полях")
 def test_valid_change_info_about_user_in_all_fields(log_test, register_client, mail_client, auth_client, account_client,
-                                      reg_auth_data, user_data):
+                                                    reg_auth_data, user_data):
     with allure.step("Предусловие: регистрация и активация пользователя"):
         # Регистрация
         response = register_client.register_user(reg_auth_data)
         assert response.status_code == 201, f"Registration failed, status_code of the response: {response.status_code}"
         # Получаем токен активации и активируем пользователя
-        token = mail_client.find_letter_by_login(reg_auth_data["login"])
+        token = mail_client.find_activate_letter_by_login(reg_auth_data["login"])
         response = register_client.activate_user(token)
         assert response.json()["resource"]["login"] == reg_auth_data["login"], "Activation of user failed"
         # Пытаемся авторизоваться только что созданным и активированным пользователем
@@ -125,3 +129,56 @@ def test_valid_change_info_about_user_in_all_fields(log_test, register_client, m
         assert response.status_code == 200, f"Changing info failed, status_code of the response: {response.status_code}"
         for item in user_data.values():
             assert item in response.json()["resource"].values()
+
+@allure.title("Позитивная проверка изменения пароля пользователя")
+@allure.description("Проверяем изменение пароля пользователя через API")
+def test_valid_change_password(log_test, register_client, mail_client, auth_client, account_client,
+                               reg_auth_data, user_data):
+    with allure.step("Предусловие: регистрация и активация пользователя"):
+        # Регистрация
+        response = register_client.register_user(reg_auth_data)
+        assert response.status_code == 201, f"Registration failed, status_code of the response: {response.status_code}"
+        # Получаем токен активации и активируем пользователя
+        token = mail_client.find_activate_letter_by_login(reg_auth_data["login"])
+        response = register_client.activate_user(token)
+        assert response.json()["resource"]["login"] == reg_auth_data["login"], "Activation of user failed"
+        # Пытаемся авторизоваться только что созданным и активированным пользователем
+        payload = {
+            "login": reg_auth_data["login"],
+            "password": reg_auth_data["password"],
+            "rememberMe": True
+        }
+        response = auth_client.auth_user(payload)
+        assert response.status_code == 200, f"Authorization failed, status_code of the response: {response.status_code}"
+        assert "token" in response.json()["metadata"], "There's no any token"
+    with allure.step("Меняем пароль пользователю"):
+        # Сбрасываем пароль, используя логин и email
+        account_client.reset_password(login=reg_auth_data["login"], email=reg_auth_data["email"])
+        # Находим письмо по сбросу пароля и забираем оттуда токен
+        token = mail_client.find_reset_password_letter_by_login(login=reg_auth_data["login"])
+        # Меняем пароль используя взятый токен
+        account_client.change_password(login=reg_auth_data["login"],
+                                       token=token,
+                                       old_password=reg_auth_data["password"],
+                                       new_password=reg_auth_data["password"] + '1')
+        # Попытка авторизоваться со старым паролем
+        payload = {
+            "login": reg_auth_data["login"],
+            "password": reg_auth_data["password"],
+            "rememberMe": True
+        }
+        response = auth_client.auth_user(payload)
+        assert response.status_code == 400
+        assert response.json()["detail"]["errors"]["login"][
+                   0] == "The password is incorrect. Did you forget to switch the keyboard?"
+
+        # Попытка авторизоваться с новым паролем
+        payload = {
+            "login": reg_auth_data["login"],
+            "password": reg_auth_data["password"] + '1',
+            "rememberMe": True
+        }
+        response = auth_client.auth_user(payload)
+        with allure.step("Проверяем статус-код и сообщение о валидации в ответе"):
+            assert response.status_code == 200, f"Authorization failed, status_code of the response: {response.status_code}"
+            assert "token" in response.json()["metadata"], "There's no any token"
