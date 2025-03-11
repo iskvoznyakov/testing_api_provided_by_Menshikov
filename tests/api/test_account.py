@@ -1,5 +1,3 @@
-from pprint import pprint
-
 import allure
 import pytest
 
@@ -130,6 +128,7 @@ def test_valid_change_info_about_user_in_all_fields(log_test, register_client, m
         for item in user_data.values():
             assert item in response.json()["resource"].values()
 
+
 @allure.title("Позитивная проверка изменения пароля пользователя")
 @allure.description("Проверяем изменение пароля пользователя через API")
 def test_valid_change_password(log_test, register_client, mail_client, auth_client, account_client,
@@ -182,3 +181,41 @@ def test_valid_change_password(log_test, register_client, mail_client, auth_clie
         with allure.step("Проверяем статус-код и сообщение о валидации в ответе"):
             assert response.status_code == 200, f"Authorization failed, status_code of the response: {response.status_code}"
             assert "token" in response.json()["metadata"], "There's no any token"
+
+
+def test_valid_delete_account(log_test, register_client, mail_client, auth_client, account_client,
+                              reg_auth_data, user_data):
+    with allure.step("Предусловие: регистрация и активация пользователя"):
+        # Регистрация
+        response = register_client.register_user(reg_auth_data)
+        assert response.status_code == 201, f"Registration failed, status_code of the response: {response.status_code}"
+        # Получаем токен активации и активируем пользователя
+        token = mail_client.find_activate_letter_by_login(reg_auth_data["login"])
+        response = register_client.activate_user(token)
+        assert response.json()["resource"]["login"] == reg_auth_data["login"], "Activation of user failed"
+        # Пытаемся авторизоваться только что созданным и активированным пользователем
+        payload = {
+            "login": reg_auth_data["login"],
+            "password": reg_auth_data["password"],
+            "rememberMe": True
+        }
+        response = auth_client.auth_user(payload)
+        assert response.status_code == 200, f"Authorization failed, status_code of the response: {response.status_code}"
+        assert "token" in response.json()["metadata"], "There's no any token"
+        auth_token = response.json()["metadata"]["token"]
+    with allure.step("Удаляем пользователя"):
+        response = account_client.request_for_deleting_account(email=reg_auth_data["email"], auth_token=auth_token)
+        delete_token = mail_client.find_delete_user_letter_by_login(reg_auth_data["login"])
+        response = account_client.delete_account(delete_token=delete_token, auth_token=auth_token)
+        assert response.status_code == 204
+        # Попытка авторизоваться удаленным пользователем
+        payload = {
+            "login": reg_auth_data["login"],
+            "password": reg_auth_data["password"],
+            "rememberMe": True
+        }
+        response = auth_client.auth_user(payload)
+    with allure.step("Проверяем статус-код и сообщение о валидации в ответе"):
+        assert response.status_code == 400, f"Authorization not failed, status_code of the response: {response.status_code}"
+        assert response.json()["detail"]["errors"]["login"][
+                   0] == "There are no users found with this login. Maybe there was a typo?", "Authorization not failed"

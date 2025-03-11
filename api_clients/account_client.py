@@ -31,3 +31,11 @@ class AccountClient(BaseClient):
             "newPassword": new_password
         }
         return self._request(method="PUT", endpoint="account/change-password", json=payload)
+
+    def request_for_deleting_account(self, email, auth_token):
+        self.headers.update({"token": auth_token})
+        return self._request(method="DELETE", endpoint=f"account?email={email}")
+
+    def delete_account(self, delete_token, auth_token):
+        self.headers.update({"token": auth_token})
+        return self._request(method="DELETE", endpoint=f"account/confirmation-delete?delete_token={delete_token}")
